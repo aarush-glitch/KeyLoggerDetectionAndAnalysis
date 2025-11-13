@@ -5,32 +5,77 @@
 {% block content %}
 <div class="space-y-6">
     <div class="terminal p-6 rounded-lg">
-        <h2 class="text-3xl font-bold gradient-text mb-4">⚙️ Python Static Analysis Tool</h2>
+        <h2 class="text-3xl font-bold gradient-text mb-4">⚙️ Static Analysis Tool</h2>
         <p class="text-gray-300">
-            Analyze Python code for suspicious imports, file operations, and network activities.
+            Analyze Python source code or PE binaries (EXE/DLL) for suspicious patterns.
             This tool performs static analysis without executing any code.
         </p>
     </div>
 
     <div class="terminal p-6 rounded-lg">
-        <h3 class="text-xl font-bold text-cyber-blue mb-4">Code Input</h3>
-        <p class="text-sm text-gray-400 mb-3">Paste Python code to analyze:</p>
-        
-        <div class="mb-4 flex space-x-2">
-            <button onclick="loadSampleKeylogger()" class="bg-cyber-blue/20 hover:bg-cyber-blue/30 text-cyber-blue px-4 py-2 rounded transition text-sm">
-                Load Sample Keylogger
+        <div class="flex space-x-2 mb-6 border-b border-cyber-blue/30">
+            <button id="codeTab" onclick="switchTab('code')" class="px-6 py-3 font-semibold text-cyber-blue border-b-2 border-cyber-blue">
+                📝 Source Code Analysis
             </button>
-            <button onclick="clearAnalysisCode()" class="bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 px-4 py-2 rounded transition text-sm">
-                Clear
+            <button id="binaryTab" onclick="switchTab('binary')" class="px-6 py-3 font-semibold text-gray-400 hover:text-cyber-purple">
+                🔍 Binary Analysis (PE)
             </button>
         </div>
-        
-        <textarea id="analysisCode" class="w-full h-96 bg-black text-gray-100 p-4 rounded-lg mono text-sm border border-cyber-blue/30 focus:border-cyber-blue focus:outline-none" placeholder="Paste Python code here..."></textarea>
-        
-        <div class="mt-4 text-center">
-            <button onclick="runAnalysis()" class="btn-primary text-white px-8 py-3 rounded-lg text-lg font-semibold transition">
-                🔬 Analyze Code
-            </button>
+
+        <div id="codeAnalysisSection">
+            <h3 class="text-xl font-bold text-cyber-blue mb-4">Python Code Input</h3>
+            <p class="text-sm text-gray-400 mb-3">Paste Python code to analyze:</p>
+            
+            <div class="mb-4 flex space-x-2">
+                <button onclick="loadSampleKeylogger()" class="bg-cyber-blue/20 hover:bg-cyber-blue/30 text-cyber-blue px-4 py-2 rounded transition text-sm">
+                    Load Sample Keylogger
+                </button>
+                <button onclick="clearAnalysisCode()" class="bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 px-4 py-2 rounded transition text-sm">
+                    Clear
+                </button>
+            </div>
+            
+            <textarea id="analysisCode" class="w-full h-96 bg-black text-gray-100 p-4 rounded-lg mono text-sm border border-cyber-blue/30 focus:border-cyber-blue focus:outline-none" placeholder="Paste Python code here..."></textarea>
+            
+            <div class="mt-4 text-center">
+                <button onclick="runAnalysis()" class="btn-primary text-white px-8 py-3 rounded-lg text-lg font-semibold transition">
+                    🔬 Analyze Code
+                </button>
+            </div>
+        </div>
+
+        <div id="binaryAnalysisSection" class="hidden">
+            <h3 class="text-xl font-bold text-cyber-purple mb-4">PE Binary Upload</h3>
+            <p class="text-sm text-gray-400 mb-3">Upload a Windows executable (.exe) or DLL (.dll) for analysis:</p>
+            
+            <div class="border-2 border-dashed border-cyber-purple/30 rounded-lg p-8 text-center bg-cyber-dark/30">
+                <input type="file" id="binaryFile" accept=".exe,.dll" class="hidden" onchange="handleFileSelect(event)">
+                <div id="uploadPrompt">
+                    <div class="text-cyber-purple text-5xl mb-4">📁</div>
+                    <button onclick="document.getElementById('binaryFile').click()" class="bg-cyber-purple/20 hover:bg-cyber-purple/30 text-cyber-purple px-6 py-3 rounded-lg transition font-semibold">
+                        Choose PE File
+                    </button>
+                    <p class="text-gray-400 text-sm mt-4">Supported: .exe, .dll (Max 10MB)</p>
+                </div>
+                <div id="fileInfo" class="hidden">
+                    <div class="text-cyber-green text-4xl mb-3">✓</div>
+                    <p class="text-cyber-green font-semibold mb-2" id="fileName"></p>
+                    <p class="text-gray-400 text-sm mb-4" id="fileSize"></p>
+                    <div class="flex justify-center space-x-3">
+                        <button onclick="analyzeBinary()" class="btn-primary text-white px-6 py-2 rounded-lg transition">
+                            🔬 Analyze Binary
+                        </button>
+                        <button onclick="clearBinaryFile()" class="bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 px-6 py-2 rounded transition">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-yellow-900/30 border border-yellow-500 p-4 rounded-lg text-sm">
+                <h4 class="text-yellow-400 font-bold mb-2">⚠️ Educational Purpose</h4>
+                <p class="text-gray-300">This tool uses the <code class="text-cyan-400">pefile</code> library to extract PE import tables and analyze suspicious Windows API calls without executing the binary.</p>
+            </div>
         </div>
     </div>
 
@@ -140,10 +185,15 @@ function displayAnalysisResults(data) {
         return;
     }
     
-    document.getElementById('sha256Hash').textContent = data.hash.sha256;
-    document.getElementById('md5Hash').textContent = data.hash.md5;
+    if (currentAnalysisType !== 'code') {
+        clearAnalysisResults();
+    }
+    currentAnalysisType = 'code';
     
-    const riskScore = data.risk_score;
+    document.getElementById('sha256Hash').textContent = data.hash.sha256 || 'N/A';
+    document.getElementById('md5Hash').textContent = data.hash.md5 || 'N/A';
+    
+    const riskScore = data.risk_score || 0;
     const riskBar = document.getElementById('riskBar');
     const riskScoreEl = document.getElementById('riskScore');
     const riskLevelEl = document.getElementById('riskLevel');
@@ -169,9 +219,9 @@ function displayAnalysisResults(data) {
     riskLevelEl.textContent = level;
     riskLevelEl.className = `text-sm mt-2 text-center font-semibold ${color.replace('bg-', 'text-')}`;
     
-    displayImports(data.suspicious_imports);
-    displayFileOps(data.file_operations);
-    displayNetworkOps(data.network_operations);
+    displayImports(data.suspicious_imports || []);
+    displayFileOps(data.file_operations || []);
+    displayNetworkOps(data.network_operations || []);
     
     document.getElementById('analysisResults').classList.remove('hidden');
     document.getElementById('analysisResults').scrollIntoView({ behavior: 'smooth' });
@@ -246,6 +296,279 @@ function displayNetworkOps(operations) {
         html += '</div></div>';
         div.innerHTML = html;
     }
+}
+
+let selectedFile = null;
+let currentAnalysisType = null;
+
+function switchTab(tab) {
+    const codeTab = document.getElementById('codeTab');
+    const binaryTab = document.getElementById('binaryTab');
+    const codeSection = document.getElementById('codeAnalysisSection');
+    const binarySection = document.getElementById('binaryAnalysisSection');
+    
+    if (tab === 'code') {
+        codeTab.className = 'px-6 py-3 font-semibold text-cyber-blue border-b-2 border-cyber-blue';
+        binaryTab.className = 'px-6 py-3 font-semibold text-gray-400 hover:text-cyber-purple';
+        codeSection.classList.remove('hidden');
+        binarySection.classList.add('hidden');
+    } else {
+        codeTab.className = 'px-6 py-3 font-semibold text-gray-400 hover:text-cyber-blue';
+        binaryTab.className = 'px-6 py-3 font-semibold text-cyber-purple border-b-2 border-cyber-purple';
+        codeSection.classList.add('hidden');
+        binarySection.classList.remove('hidden');
+    }
+    
+    clearAnalysisResults();
+    document.getElementById('analysisResults').classList.add('hidden');
+}
+
+function clearAnalysisResults() {
+    const resultsDiv = document.getElementById('analysisResults');
+    const allSectionTables = resultsDiv.querySelectorAll('.terminal');
+    allSectionTables.forEach((table, index) => {
+        if (index > 0) {
+            table.remove();
+        }
+    });
+    
+    document.getElementById('sha256Hash').textContent = '';
+    document.getElementById('md5Hash').textContent = '';
+    document.getElementById('riskScore').textContent = '';
+    document.getElementById('riskLevel').textContent = '';
+    document.getElementById('riskBar').style.width = '0%';
+    document.getElementById('riskBar').className = 'h-full transition-all duration-500';
+    
+    document.getElementById('suspiciousImports').innerHTML = '';
+    document.getElementById('fileOperations').innerHTML = '';
+    document.getElementById('networkOperations').innerHTML = '';
+    
+    currentAnalysisType = null;
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        selectedFile = file;
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(2) + ' KB';
+        document.getElementById('uploadPrompt').classList.add('hidden');
+        document.getElementById('fileInfo').classList.remove('hidden');
+    }
+}
+
+function clearBinaryFile() {
+    selectedFile = null;
+    document.getElementById('binaryFile').value = '';
+    document.getElementById('uploadPrompt').classList.remove('hidden');
+    document.getElementById('fileInfo').classList.add('hidden');
+    document.getElementById('analysisResults').classList.add('hidden');
+}
+
+function analyzeBinary() {
+    if (!selectedFile) {
+        alert('Please select a file first');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('binary', selectedFile);
+    
+    fetch('/api/analyze-binary', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayBinaryResults(data);
+        } else {
+            alert('Analysis failed: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function displayBinaryResults(data) {
+    if (!data.success || data.analysis_type !== 'binary') {
+        alert('Invalid binary analysis response');
+        return;
+    }
+    
+    if (currentAnalysisType !== 'binary') {
+        clearAnalysisResults();
+    }
+    currentAnalysisType = 'binary';
+    
+    document.getElementById('sha256Hash').textContent = data.hash.sha256 || 'N/A';
+    document.getElementById('md5Hash').textContent = data.hash.md5 || 'N/A';
+    
+    const riskScore = data.risk_score || 0;
+    const riskBar = document.getElementById('riskBar');
+    const riskScoreEl = document.getElementById('riskScore');
+    const riskLevelEl = document.getElementById('riskLevel');
+    
+    let color, level;
+    if (riskScore < 30) {
+        color = 'bg-green-500';
+        level = 'LOW RISK';
+        riskScoreEl.className = 'text-3xl font-bold text-green-400';
+    } else if (riskScore < 60) {
+        color = 'bg-yellow-500';
+        level = 'MEDIUM RISK';
+        riskScoreEl.className = 'text-3xl font-bold text-yellow-400';
+    } else {
+        color = 'bg-red-500';
+        level = 'HIGH RISK';
+        riskScoreEl.className = 'text-3xl font-bold text-red-400';
+    }
+    
+    riskBar.className = `h-full transition-all duration-500 ${color}`;
+    riskBar.style.width = riskScore + '%';
+    riskScoreEl.textContent = riskScore;
+    riskLevelEl.textContent = level;
+    riskLevelEl.className = `text-sm mt-2 text-center font-semibold ${color.replace('bg-', 'text-')}`;
+    
+    displayBinaryMetadata(data.binary_metadata || {});
+    displayDLLDependencies(data.dll_dependencies || [], data.import_details || {});
+    displaySuspiciousAPIs(data.suspicious_windows_apis || []);
+    displaySections(data.sections || []);
+    
+    document.getElementById('analysisResults').classList.remove('hidden');
+    document.getElementById('analysisResults').scrollIntoView({ behavior: 'smooth' });
+}
+
+function displayBinaryMetadata(metadata) {
+    const div = document.getElementById('suspiciousImports');
+    const filename = metadata.filename || 'Unknown';
+    const sizeKB = metadata.size ? (metadata.size / 1024).toFixed(2) : 'N/A';
+    const machine = metadata.machine || 'N/A';
+    const sectionsCount = metadata.sections_count || 'N/A';
+    const entryPoint = metadata.entry_point || 'N/A';
+    const timestamp = metadata.timestamp || 'N/A';
+    
+    div.innerHTML = `
+        <div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-blue/30">
+            <h4 class="text-cyber-blue font-bold text-lg mb-3">📄 Binary Metadata</h4>
+            <div class="grid grid-cols-2 gap-3 mono text-sm">
+                <div class="bg-black/50 p-2 rounded"><span class="text-gray-400">Filename:</span> <span class="text-cyan-400">${filename}</span></div>
+                <div class="bg-black/50 p-2 rounded"><span class="text-gray-400">Size:</span> <span class="text-cyan-400">${sizeKB} KB</span></div>
+                <div class="bg-black/50 p-2 rounded"><span class="text-gray-400">Machine:</span> <span class="text-cyan-400">${machine}</span></div>
+                <div class="bg-black/50 p-2 rounded"><span class="text-gray-400">Sections:</span> <span class="text-cyan-400">${sectionsCount}</span></div>
+                <div class="bg-black/50 p-2 rounded"><span class="text-gray-400">Entry Point:</span> <span class="text-cyan-400">${entryPoint}</span></div>
+                <div class="bg-black/50 p-2 rounded"><span class="text-gray-400">Timestamp:</span> <span class="text-cyan-400">${timestamp}</span></div>
+            </div>
+        </div>`;
+}
+
+function displayDLLDependencies(dlls, details) {
+    const div = document.getElementById('fileOperations');
+    let html = `<div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-green/30">
+        <h4 class="text-cyber-green font-bold text-lg mb-3">📚 Import Table Analysis</h4>
+        <p class="text-gray-400 text-sm mb-3">DLL Dependencies: ${dlls.length}</p>
+        <div class="space-y-2">`;
+    
+    dlls.forEach(dll => {
+        const imports = details[dll] || [];
+        html += `
+            <details class="bg-black/50 p-3 rounded">
+                <summary class="text-cyan-400 font-semibold cursor-pointer hover:text-cyan-300 mono text-sm">
+                    ${dll} (${imports.length} imports)
+                </summary>
+                <div class="mt-2 pl-4 space-y-1 text-xs mono text-gray-400">
+                    ${imports.slice(0, 10).map(imp => `<div>• ${imp}</div>`).join('')}
+                    ${imports.length > 10 ? `<div class="text-yellow-400">... and ${imports.length - 10} more</div>` : ''}
+                </div>
+            </details>`;
+    });
+    
+    html += '</div></div>';
+    div.innerHTML = html;
+}
+
+function displaySuspiciousAPIs(apis) {
+    const div = document.getElementById('networkOperations');
+    if (apis.length === 0) {
+        div.innerHTML = `
+            <div class="bg-green-900/30 border border-green-500 p-4 rounded-lg">
+                <h4 class="text-green-400 font-bold">✓ No Suspicious Windows APIs Detected</h4>
+            </div>`;
+    } else {
+        let html = `<div class="bg-red-900/30 border border-red-500 p-4 rounded-lg">
+            <h4 class="text-red-400 font-bold text-lg mb-3">⚠️ Suspicious Windows API Calls (${apis.length})</h4>
+            <div class="space-y-2">`;
+        
+        apis.forEach(api => {
+            const severityColors = {
+                'CRITICAL': 'text-red-500',
+                'HIGH': 'text-orange-400',
+                'MEDIUM': 'text-yellow-400'
+            };
+            const severityColor = severityColors[api.severity] || 'text-yellow-400';
+            
+            html += `
+                <div class="bg-black/50 p-3 rounded">
+                    <div class="flex justify-between items-center mb-1">
+                        <code class="text-cyan-400 font-bold mono text-sm">${api.function}</code>
+                        <span class="${severityColor} font-bold text-xs">${api.severity}</span>
+                    </div>
+                    <div class="text-gray-400 text-xs">DLL: ${api.dll}</div>
+                    <div class="text-gray-300 text-xs mt-1">📌 ${api.reason}</div>
+                </div>`;
+        });
+        
+        html += '</div></div>';
+        div.innerHTML = html;
+    }
+}
+
+function displaySections(sections) {
+    if (!sections || sections.length === 0) {
+        return;
+    }
+    
+    const resultsDiv = document.getElementById('analysisResults');
+    let html = `
+        <div class="terminal p-6 rounded-lg">
+            <h3 class="text-xl font-bold text-cyber-purple mb-4">PE Sections Analysis</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full mono text-sm">
+                    <thead>
+                        <tr class="border-b border-cyber-purple/30">
+                            <th class="text-left p-2 text-cyber-purple">Name</th>
+                            <th class="text-right p-2 text-cyber-purple">Virtual Size</th>
+                            <th class="text-right p-2 text-cyber-purple">Raw Size</th>
+                            <th class="text-right p-2 text-cyber-purple">Entropy</th>
+                            <th class="text-center p-2 text-cyber-purple">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+    
+    sections.forEach(section => {
+        const entropyColor = section.suspicious ? 'text-red-400' : 'text-green-400';
+        const statusIcon = section.suspicious ? '⚠️' : '✓';
+        const statusText = section.suspicious ? 'High Entropy' : 'Normal';
+        
+        html += `
+            <tr class="border-b border-gray-700">
+                <td class="p-2 text-cyan-400">${section.name || 'Unknown'}</td>
+                <td class="p-2 text-right text-gray-300">${section.virtual_size || 0}</td>
+                <td class="p-2 text-right text-gray-300">${section.raw_size || 0}</td>
+                <td class="p-2 text-right ${entropyColor} font-bold">${section.entropy || 0}</td>
+                <td class="p-2 text-center ${entropyColor}">${statusIcon} ${statusText}</td>
+            </tr>`;
+    });
+    
+    html += `
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-gray-400 text-xs mt-4">* High entropy (>7.0) may indicate encryption or compression, common in packed malware.</p>
+        </div>`;
+    
+    resultsDiv.insertAdjacentHTML('beforeend', html);
 }
 </script>
 {% endblock %}

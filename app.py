@@ -121,6 +121,141 @@ def analyze_imports():
             'error': str(e)
         }), 400
 
+@app.route('/api/analyze-binary', methods=['POST'])
+def analyze_binary():
+    try:
+        if 'binary' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No binary file provided'
+            }), 400
+        
+        file = request.files['binary']
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No file selected'
+            }), 400
+        
+        max_size = 10 * 1024 * 1024
+        file_data = file.read(max_size)
+        
+        if len(file_data) >= max_size:
+            return jsonify({
+                'success': False,
+                'error': 'File too large (max 10MB)'
+            }), 400
+        
+        sha256_hash = hashlib.sha256(file_data).hexdigest()
+        md5_hash = hashlib.md5(file_data).hexdigest()
+        
+        try:
+            pe = pefile.PE(data=file_data, fast_load=True)
+            pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']])
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Invalid PE file: {str(e)}'
+            }), 400
+        
+        suspicious_apis = {
+            'GetAsyncKeyState': {'severity': 'CRITICAL', 'reason': 'Used to detect key presses'},
+            'SetWindowsHookExA': {'severity': 'CRITICAL', 'reason': 'Sets keyboard/mouse hooks'},
+            'SetWindowsHookExW': {'severity': 'CRITICAL', 'reason': 'Sets keyboard/mouse hooks (Unicode)'},
+            'GetForegroundWindow': {'severity': 'HIGH', 'reason': 'Retrieves active window handle'},
+            'ReadConsoleInputA': {'severity': 'HIGH', 'reason': 'Reads console input'},
+            'ReadConsoleInputW': {'severity': 'HIGH', 'reason': 'Reads console input (Unicode)'},
+            'WriteFile': {'severity': 'MEDIUM', 'reason': 'File writing capability'},
+            'MapVirtualKeyA': {'severity': 'MEDIUM', 'reason': 'Keyboard key mapping'},
+            'MapVirtualKeyW': {'severity': 'MEDIUM', 'reason': 'Keyboard key mapping (Unicode)'},
+            'CreateFileA': {'severity': 'MEDIUM', 'reason': 'File creation/opening'},
+            'CreateFileW': {'severity': 'MEDIUM', 'reason': 'File creation/opening (Unicode)'},
+            'SendInput': {'severity': 'HIGH', 'reason': 'Simulates keyboard/mouse input'},
+            'GetClipboardData': {'severity': 'HIGH', 'reason': 'Accesses clipboard data'},
+            'InternetOpenA': {'severity': 'MEDIUM', 'reason': 'Internet connectivity'},
+            'InternetOpenW': {'severity': 'MEDIUM', 'reason': 'Internet connectivity (Unicode)'},
+            'HttpSendRequestA': {'severity': 'HIGH', 'reason': 'Sends HTTP requests (data exfiltration)'},
+            'HttpSendRequestW': {'severity': 'HIGH', 'reason': 'Sends HTTP requests (data exfiltration)'},
+            'GetKeyState': {'severity': 'HIGH', 'reason': 'Retrieves key state'},
+            'GetKeyboardState': {'severity': 'CRITICAL', 'reason': 'Retrieves keyboard state'},
+        }
+        
+        dll_dependencies = []
+        import_details = {}
+        suspicious_windows_apis = []
+        
+        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                dll_name = entry.dll.decode('utf-8') if isinstance(entry.dll, bytes) else entry.dll
+                dll_dependencies.append(dll_name)
+                
+                imports = []
+                for imp in entry.imports:
+                    if imp.name:
+                        func_name = imp.name.decode('utf-8') if isinstance(imp.name, bytes) else imp.name
+                        imports.append(func_name)
+                        
+                        if func_name in suspicious_apis:
+                            suspicious_windows_apis.append({
+                                'function': func_name,
+                                'dll': dll_name,
+                                'severity': suspicious_apis[func_name]['severity'],
+                                'reason': suspicious_apis[func_name]['reason']
+                            })
+                
+                import_details[dll_name] = imports
+        
+        sections = []
+        for section in pe.sections:
+            section_name = section.Name.decode('utf-8').rstrip('\x00')
+            entropy = section.get_entropy()
+            sections.append({
+                'name': section_name,
+                'virtual_size': section.Misc_VirtualSize,
+                'virtual_address': hex(section.VirtualAddress),
+                'raw_size': section.SizeOfRawData,
+                'entropy': round(entropy, 2),
+                'suspicious': entropy > 7.0
+            })
+        
+        binary_metadata = {
+            'filename': file.filename,
+            'size': len(file_data),
+            'machine': hex(pe.FILE_HEADER.Machine),
+            'timestamp': pe.FILE_HEADER.TimeDateStamp,
+            'sections_count': pe.FILE_HEADER.NumberOfSections,
+            'entry_point': hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
+        }
+        
+        api_risk = len(suspicious_windows_apis) * 25
+        entropy_risk = sum(15 for s in sections if s['suspicious'])
+        dll_risk = 5 if any(dll.lower() in ['ws2_32.dll', 'wininet.dll'] for dll in dll_dependencies) else 0
+        
+        binary_risk_score = min(100, api_risk + entropy_risk + dll_risk)
+        
+        pe.close()
+        
+        return jsonify({
+            'success': True,
+            'analysis_type': 'binary',
+            'hash': {
+                'sha256': sha256_hash,
+                'md5': md5_hash
+            },
+            'binary_metadata': binary_metadata,
+            'dll_dependencies': dll_dependencies,
+            'import_details': import_details,
+            'suspicious_windows_apis': suspicious_windows_apis,
+            'sections': sections,
+            'risk_score': binary_risk_score
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/get-sample-code/<sample_type>')
 def get_sample_code(sample_type):
     samples = {
