@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Keylogger Detection Platform{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            dark: '#0a0e27',
+                            darker: '#050812',
+                            blue: '#00d9ff',
+                            purple: '#a855f7',
+                            green: '#10b981',
+                            red: '#ef4444',
+                            yellow: '#fbbf24'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #050812 100%);
+        }
+        
+        code, pre, .mono {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .terminal {
+            background: #1a1f3a;
+            border: 1px solid #00d9ff;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+        
+        .glow {
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.4);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, #00d9ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-active {
+            background: rgba(0, 217, 255, 0.2);
+            border-left: 3px solid #00d9ff;
+        }
+        
+        .alert-banner {
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.2), rgba(251, 191, 36, 0.2));
+            border-left: 4px solid #ef4444;
+        }
+        
+        .terminal-output {
+            background: #000;
+            color: #0f0;
+            font-family: 'Fira Code', monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00d9ff, #0ea5e9);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0ea5e9, #00d9ff);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-cyber-darker text-gray-100 min-h-screen">
+    <div class="alert-banner p-4 text-center text-sm font-semibold">
+        ⚠️ EDUCATIONAL PURPOSE ONLY - All analysis performed in controlled lab environment for defensive research
+    </div>
+
+    <nav class="bg-cyber-dark border-b border-cyber-blue/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold gradient-text glow">🛡️ Keylogger Detection Platform</h1>
+                    </div>
+                </div>
+                <div class="flex space-x-1">
+                    <a href="/" class="px-4 py-2 rounded-md text-sm font-medium hover:bg-cyber-blue/10 transition">Home</a>
+                    <a href="/code-viewer" class="px-4 py-2 rounded-md text-sm font-medium hover:bg-cyber-blue/10 transition">Code Viewer</a>
+                    <a href="/yara-scanner" class="px-4 py-2 rounded-md text-sm font-medium hover:bg-cyber-blue/10 transition">YARA Scanner</a>
+                    <a href="/static-analysis" class="px-4 py-2 rounded-md text-sm font-medium hover:bg-cyber-blue/10 transition">Static Analysis</a>
+                    <a href="/powershell-generator" class="px-4 py-2 rounded-md text-sm font-medium hover:bg-cyber-blue/10 transition">PowerShell</a>
+                    <a href="/ioc-dashboard" class="px-4 py-2 rounded-md text-sm font-medium hover:bg-cyber-blue/10 transition">IoC Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-cyber-dark border-t border-cyber-blue/30 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-sm text-gray-400">
+                <p>Ethical Hacking Project - B.Tech CSE Semester VII</p>
+                <p class="mt-2">Developed by: Lavanya Bhati, Bhavya Mantoo, Shivaprasad Arunkumar Farale, Aarush Gupta</p>
+                <p class="mt-2 text-xs text-cyber-blue">Submitted to: Dr. Shobit Tyagi</p>
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

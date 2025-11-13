@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}YARA Scanner - Keylogger Detection Platform{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="terminal p-6 rounded-lg">
+        <h2 class="text-3xl font-bold gradient-text mb-4">🔍 YARA Pattern Scanner</h2>
+        <p class="text-gray-300">
+            Create and test YARA rules to detect malicious patterns and suspicious code signatures.
+            YARA is a powerful pattern-matching tool used in malware research.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="terminal p-6 rounded-lg">
+            <h3 class="text-xl font-bold text-cyber-blue mb-4">YARA Rule Editor</h3>
+            <p class="text-sm text-gray-400 mb-3">Write or use pre-defined YARA rules:</p>
+            
+            <div class="mb-4 flex space-x-2">
+                <button onclick="loadDefaultRule()" class="bg-cyber-blue/20 hover:bg-cyber-blue/30 text-cyber-blue px-4 py-2 rounded transition text-sm">
+                    Load Default Rule
+                </button>
+                <button onclick="clearRule()" class="bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 px-4 py-2 rounded transition text-sm">
+                    Clear
+                </button>
+            </div>
+            
+            <textarea id="yaraRule" class="w-full h-80 bg-black text-gray-100 p-4 rounded-lg mono text-sm border border-cyber-blue/30 focus:border-cyber-blue focus:outline-none" placeholder="Enter YARA rule here..."></textarea>
+        </div>
+
+        <div class="terminal p-6 rounded-lg">
+            <h3 class="text-xl font-bold text-cyber-purple mb-4">Code to Scan</h3>
+            <p class="text-sm text-gray-400 mb-3">Paste the code you want to scan:</p>
+            
+            <div class="mb-4 flex space-x-2">
+                <button onclick="loadSampleCode()" class="bg-cyber-purple/20 hover:bg-cyber-purple/30 text-cyber-purple px-4 py-2 rounded transition text-sm">
+                    Load Sample Keylogger
+                </button>
+                <button onclick="clearCode()" class="bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 px-4 py-2 rounded transition text-sm">
+                    Clear
+                </button>
+            </div>
+            
+            <textarea id="codeToScan" class="w-full h-80 bg-black text-gray-100 p-4 rounded-lg mono text-sm border border-cyber-purple/30 focus:border-cyber-purple focus:outline-none" placeholder="Paste code here..."></textarea>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <button onclick="runScan()" class="btn-primary text-white px-8 py-3 rounded-lg text-lg font-semibold transition">
+            🔍 Run YARA Scan
+        </button>
+    </div>
+
+    <div id="resultsSection" class="hidden terminal p-6 rounded-lg">
+        <h3 class="text-2xl font-bold text-cyber-green mb-4">Scan Results</h3>
+        <div id="scanResults"></div>
+    </div>
+
+    <div class="terminal p-6 rounded-lg">
+        <h3 class="text-xl font-bold text-cyber-yellow mb-4">About YARA Rules</h3>
+        <div class="text-gray-300 text-sm space-y-2">
+            <p><strong>YARA</strong> is a tool aimed at helping malware researchers identify and classify malware samples.</p>
+            <p>A YARA rule consists of:</p>
+            <ul class="list-disc list-inside ml-4 space-y-1 mono">
+                <li><span class="text-cyber-blue">rule name</span> - Identifier for the rule</li>
+                <li><span class="text-cyber-green">strings</span> - Patterns to search for (text, hex, regex)</li>
+                <li><span class="text-cyber-purple">condition</span> - Logic determining when rule matches</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loadDefaultRule() {
+    const defaultRule = `rule Detect_Python_Keylogger
+{
+    meta:
+        description = "Detects Python-based keylogger patterns"
+        author = "Ethical Hacking Team"
+        severity = "HIGH"
+    
+    strings:
+        $import1 = "pynput" nocase
+        $import2 = "keyboard" nocase
+        $import3 = "smtplib" nocase
+        $logging = "logging" nocase
+        $file1 = "keylog" nocase
+        $file2 = ".log" nocase
+        $listener = "Listener" nocase
+        $on_press = "on_press" nocase
+    
+    condition:
+        ($import1 or $import2) and ($logging or $file1 or $file2) and 2 of them
+}`;
+    document.getElementById('yaraRule').value = defaultRule;
+}
+
+function loadSampleCode() {
+    fetch('/api/get-sample-code/keylogger')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('codeToScan').value = data.code;
+            }
+        });
+}
+
+function clearRule() {
+    document.getElementById('yaraRule').value = '';
+}
+
+function clearCode() {
+    document.getElementById('codeToScan').value = '';
+}
+
+function runScan() {
+    const rule = document.getElementById('yaraRule').value;
+    const code = document.getElementById('codeToScan').value;
+    
+    if (!rule || !code) {
+        alert('Please provide both YARA rule and code to scan');
+        return;
+    }
+    
+    fetch('/api/scan-with-yara', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rule, code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayResults(data);
+    })
+    .catch(error => {
+        document.getElementById('scanResults').innerHTML = 
+            `<div class="bg-red-900/30 border border-red-500 p-4 rounded-lg">
+                <p class="text-red-400">Error: ${error.message}</p>
+            </div>`;
+        document.getElementById('resultsSection').classList.remove('hidden');
+    });
+}
+
+function displayResults(data) {
+    const resultsDiv = document.getElementById('scanResults');
+    
+    if (data.success) {
+        if (data.matches.length === 0) {
+            resultsDiv.innerHTML = `
+                <div class="bg-green-900/30 border border-green-500 p-4 rounded-lg">
+                    <p class="text-green-400 font-semibold">✓ No matches found - Code appears clean</p>
+                </div>`;
+        } else {
+            let html = `<div class="bg-red-900/30 border border-red-500 p-4 rounded-lg mb-4">
+                <p class="text-red-400 font-semibold text-lg">⚠️ ${data.total_matches} Match(es) Found!</p>
+            </div>`;
+            
+            data.matches.forEach((match, index) => {
+                html += `
+                    <div class="bg-cyber-dark/50 border border-cyber-blue/30 p-4 rounded-lg mb-4">
+                        <h4 class="text-cyber-blue font-bold text-lg mb-2">Match #${index + 1}: ${match.rule}</h4>
+                        ${match.tags.length > 0 ? `<p class="text-gray-400 mb-2">Tags: ${match.tags.join(', ')}</p>` : ''}
+                        <div class="mt-3">
+                            <p class="text-cyber-green font-semibold mb-2">Matched Strings:</p>
+                            <div class="bg-black p-3 rounded mono text-sm">
+                                ${match.strings.map(s => `<div class="text-cyan-400 mb-1">• ${s[1]}: "${s[1]}"</div>`).join('')}
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+    } else {
+        resultsDiv.innerHTML = `
+            <div class="bg-red-900/30 border border-red-500 p-4 rounded-lg">
+                <p class="text-red-400 font-semibold">Error:</p>
+                <p class="text-gray-300 mono text-sm mt-2">${data.error}</p>
+            </div>`;
+    }
+    
+    document.getElementById('resultsSection').classList.remove('hidden');
+    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+{% endblock %}

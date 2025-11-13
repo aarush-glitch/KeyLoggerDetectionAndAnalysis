@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}PowerShell Generator - Keylogger Detection Platform{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="terminal p-6 rounded-lg">
+        <h2 class="text-3xl font-bold gradient-text mb-4">💻 PowerShell Script Generator</h2>
+        <p class="text-gray-300">
+            Generate PowerShell scripts for detecting persistence mechanisms, monitoring suspicious processes,
+            and scanning for keylogger-related files on Windows systems.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button onclick="generateScript('process_monitor')" class="terminal p-6 rounded-lg card-hover transition text-left">
+            <div class="text-cyber-blue text-3xl mb-3">🔍</div>
+            <h3 class="text-lg font-bold text-cyber-blue mb-2">Process Monitor</h3>
+            <p class="text-sm text-gray-400">Scan for suspicious running processes</p>
+        </button>
+
+        <button onclick="generateScript('persistence_check')" class="terminal p-6 rounded-lg card-hover transition text-left">
+            <div class="text-cyber-purple text-3xl mb-3">🔄</div>
+            <h3 class="text-lg font-bold text-cyber-purple mb-2">Persistence Check</h3>
+            <p class="text-sm text-gray-400">Detect persistence mechanisms</p>
+        </button>
+
+        <button onclick="generateScript('file_monitor')" class="terminal p-6 rounded-lg card-hover transition text-left">
+            <div class="text-cyber-green text-3xl mb-3">📁</div>
+            <h3 class="text-lg font-bold text-cyber-green mb-2">File Monitor</h3>
+            <p class="text-sm text-gray-400">Find suspicious files and logs</p>
+        </button>
+    </div>
+
+    <div id="scriptOutput" class="hidden terminal p-6 rounded-lg">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-cyber-blue">Generated Script</h3>
+            <div class="space-x-2">
+                <button onclick="copyScript()" class="bg-cyber-blue/20 hover:bg-cyber-blue/30 text-cyber-blue px-4 py-2 rounded transition text-sm">
+                    📋 Copy Script
+                </button>
+                <button onclick="downloadScript()" class="bg-cyber-green/20 hover:bg-cyber-green/30 text-cyber-green px-4 py-2 rounded transition text-sm">
+                    💾 Download .ps1
+                </button>
+            </div>
+        </div>
+        
+        <div id="scriptDisplay" class="bg-black p-4 rounded-lg overflow-x-auto max-h-96"></div>
+        
+        <div class="mt-4 bg-yellow-900/30 border border-yellow-500 p-4 rounded-lg">
+            <h4 class="text-yellow-400 font-bold mb-2">⚠️ Usage Instructions</h4>
+            <ol class="text-gray-300 text-sm space-y-1 mono">
+                <li>1. Save the script as a .ps1 file</li>
+                <li>2. Run PowerShell as Administrator</li>
+                <li>3. Execute: <code class="text-cyan-400">Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass</code></li>
+                <li>4. Run the script: <code class="text-cyan-400">.\script-name.ps1</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="terminal p-6 rounded-lg">
+        <h3 class="text-xl font-bold text-cyber-yellow mb-4">About PowerShell Detection</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+            <div>
+                <h4 class="text-cyber-blue font-semibold mb-2">Process Monitoring</h4>
+                <p class="text-gray-300 mb-2">Identifies suspicious processes by:</p>
+                <ul class="text-gray-400 space-y-1 mono text-xs">
+                    <li>• Process name patterns</li>
+                    <li>• Unusual CPU usage</li>
+                    <li>• Hidden or system processes</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="text-cyber-purple font-semibold mb-2">Persistence Detection</h4>
+                <p class="text-gray-300 mb-2">Checks common persistence locations:</p>
+                <ul class="text-gray-400 space-y-1 mono text-xs">
+                    <li>• Registry Run keys</li>
+                    <li>• Startup folder</li>
+                    <li>• Scheduled tasks</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="text-cyber-green font-semibold mb-2">File Scanning</h4>
+                <p class="text-gray-300 mb-2">Searches for suspicious files:</p>
+                <ul class="text-gray-400 space-y-1 mono text-xs">
+                    <li>• Log files (.log, .txt)</li>
+                    <li>• Keylogger executables</li>
+                    <li>• Hidden files</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="terminal p-6 rounded-lg">
+        <h3 class="text-xl font-bold text-cyber-red mb-4">Important Notes</h3>
+        <div class="bg-red-900/30 border border-red-500 p-4 rounded-lg text-sm">
+            <ul class="text-gray-300 space-y-2">
+                <li>• <strong class="text-red-400">Administrator privileges required:</strong> These scripts need elevated permissions to access system information</li>
+                <li>• <strong class="text-red-400">False positives possible:</strong> Legitimate software may trigger alerts</li>
+                <li>• <strong class="text-red-400">Educational purpose:</strong> Use only in authorized testing environments</li>
+                <li>• <strong class="text-red-400">Not a replacement:</strong> Professional antivirus software is recommended for production use</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentScript = '';
+let currentScriptType = '';
+
+function generateScript(type) {
+    fetch('/api/generate-powershell', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ type })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentScript = data.script;
+            currentScriptType = data.type;
+            document.getElementById('scriptDisplay').innerHTML = data.highlighted;
+            document.getElementById('scriptOutput').classList.remove('hidden');
+            document.getElementById('scriptOutput').scrollIntoView({ behavior: 'smooth' });
+        }
+    })
+    .catch(error => {
+        alert('Error generating script: ' + error.message);
+    });
+}
+
+function copyScript() {
+    if (currentScript) {
+        navigator.clipboard.writeText(currentScript).then(() => {
+            alert('Script copied to clipboard!');
+        });
+    }
+}
+
+function downloadScript() {
+    if (currentScript) {
+        const blob = new Blob([currentScript], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentScriptType}.ps1`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    }
+}
+</script>
+{% endblock %}

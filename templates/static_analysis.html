@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Static Analysis - Keylogger Detection Platform{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="terminal p-6 rounded-lg">
+        <h2 class="text-3xl font-bold gradient-text mb-4">⚙️ Python Static Analysis Tool</h2>
+        <p class="text-gray-300">
+            Analyze Python code for suspicious imports, file operations, and network activities.
+            This tool performs static analysis without executing any code.
+        </p>
+    </div>
+
+    <div class="terminal p-6 rounded-lg">
+        <h3 class="text-xl font-bold text-cyber-blue mb-4">Code Input</h3>
+        <p class="text-sm text-gray-400 mb-3">Paste Python code to analyze:</p>
+        
+        <div class="mb-4 flex space-x-2">
+            <button onclick="loadSampleKeylogger()" class="bg-cyber-blue/20 hover:bg-cyber-blue/30 text-cyber-blue px-4 py-2 rounded transition text-sm">
+                Load Sample Keylogger
+            </button>
+            <button onclick="clearAnalysisCode()" class="bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 px-4 py-2 rounded transition text-sm">
+                Clear
+            </button>
+        </div>
+        
+        <textarea id="analysisCode" class="w-full h-96 bg-black text-gray-100 p-4 rounded-lg mono text-sm border border-cyber-blue/30 focus:border-cyber-blue focus:outline-none" placeholder="Paste Python code here..."></textarea>
+        
+        <div class="mt-4 text-center">
+            <button onclick="runAnalysis()" class="btn-primary text-white px-8 py-3 rounded-lg text-lg font-semibold transition">
+                🔬 Analyze Code
+            </button>
+        </div>
+    </div>
+
+    <div id="analysisResults" class="hidden space-y-6">
+        <div class="terminal p-6 rounded-lg">
+            <h3 class="text-2xl font-bold text-cyber-green mb-4">Analysis Results</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-blue/30">
+                    <h4 class="text-cyber-blue font-bold mb-2">File Hashes</h4>
+                    <div class="space-y-2 mono text-xs">
+                        <div>
+                            <span class="text-gray-400">SHA-256:</span>
+                            <p id="sha256Hash" class="text-cyan-400 break-all"></p>
+                        </div>
+                        <div>
+                            <span class="text-gray-400">MD5:</span>
+                            <p id="md5Hash" class="text-cyan-400 break-all"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-red/30">
+                    <h4 class="text-cyber-red font-bold mb-2">Risk Assessment</h4>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-1">
+                            <div class="bg-gray-700 h-8 rounded-full overflow-hidden">
+                                <div id="riskBar" class="h-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div id="riskScore" class="text-3xl font-bold"></div>
+                    </div>
+                    <p id="riskLevel" class="text-sm mt-2 text-center font-semibold"></p>
+                </div>
+            </div>
+            
+            <div id="suspiciousImports" class="mb-6"></div>
+            <div id="fileOperations" class="mb-6"></div>
+            <div id="networkOperations"></div>
+        </div>
+    </div>
+
+    <div class="terminal p-6 rounded-lg">
+        <h3 class="text-xl font-bold text-cyber-yellow mb-4">Detection Methodology</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+                <h4 class="text-cyber-blue font-semibold mb-2">Import Analysis</h4>
+                <p class="text-gray-300">Scans for suspicious library imports commonly used in keyloggers</p>
+            </div>
+            <div>
+                <h4 class="text-cyber-green font-semibold mb-2">File Operations</h4>
+                <p class="text-gray-300">Identifies file writing operations that may store captured data</p>
+            </div>
+            <div>
+                <h4 class="text-cyber-purple font-semibold mb-2">Network Activity</h4>
+                <p class="text-gray-300">Detects network communications for data exfiltration</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loadSampleKeylogger() {
+    fetch('/api/get-sample-code/keylogger')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('analysisCode').value = data.code;
+            }
+        });
+}
+
+function clearAnalysisCode() {
+    document.getElementById('analysisCode').value = '';
+    document.getElementById('analysisResults').classList.add('hidden');
+}
+
+function runAnalysis() {
+    const code = document.getElementById('analysisCode').value;
+    
+    if (!code.trim()) {
+        alert('Please provide code to analyze');
+        return;
+    }
+    
+    fetch('/api/analyze-imports', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayAnalysisResults(data);
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+function displayAnalysisResults(data) {
+    if (!data.success) {
+        alert('Analysis failed: ' + data.error);
+        return;
+    }
+    
+    document.getElementById('sha256Hash').textContent = data.hash.sha256;
+    document.getElementById('md5Hash').textContent = data.hash.md5;
+    
+    const riskScore = data.risk_score;
+    const riskBar = document.getElementById('riskBar');
+    const riskScoreEl = document.getElementById('riskScore');
+    const riskLevelEl = document.getElementById('riskLevel');
+    
+    let color, level;
+    if (riskScore < 30) {
+        color = 'bg-green-500';
+        level = 'LOW RISK';
+        riskScoreEl.className = 'text-3xl font-bold text-green-400';
+    } else if (riskScore < 60) {
+        color = 'bg-yellow-500';
+        level = 'MEDIUM RISK';
+        riskScoreEl.className = 'text-3xl font-bold text-yellow-400';
+    } else {
+        color = 'bg-red-500';
+        level = 'HIGH RISK';
+        riskScoreEl.className = 'text-3xl font-bold text-red-400';
+    }
+    
+    riskBar.className = `h-full transition-all duration-500 ${color}`;
+    riskBar.style.width = riskScore + '%';
+    riskScoreEl.textContent = riskScore;
+    riskLevelEl.textContent = level;
+    riskLevelEl.className = `text-sm mt-2 text-center font-semibold ${color.replace('bg-', 'text-')}`;
+    
+    displayImports(data.suspicious_imports);
+    displayFileOps(data.file_operations);
+    displayNetworkOps(data.network_operations);
+    
+    document.getElementById('analysisResults').classList.remove('hidden');
+    document.getElementById('analysisResults').scrollIntoView({ behavior: 'smooth' });
+}
+
+function displayImports(imports) {
+    const div = document.getElementById('suspiciousImports');
+    if (imports.length === 0) {
+        div.innerHTML = `
+            <div class="bg-green-900/30 border border-green-500 p-4 rounded-lg">
+                <h4 class="text-green-400 font-bold">✓ No Suspicious Imports Detected</h4>
+            </div>`;
+    } else {
+        let html = `<div class="bg-red-900/30 border border-red-500 p-4 rounded-lg">
+            <h4 class="text-red-400 font-bold text-lg mb-3">⚠️ Suspicious Imports Found (${imports.length})</h4>
+            <div class="space-y-2">`;
+        
+        imports.forEach(imp => {
+            const severityColor = imp.severity === 'HIGH' ? 'text-red-400' : 'text-yellow-400';
+            html += `
+                <div class="bg-black/50 p-3 rounded mono text-sm">
+                    <div class="flex justify-between items-center">
+                        <code class="text-cyan-400">${imp.line}</code>
+                        <span class="${severityColor} font-bold text-xs">${imp.severity}</span>
+                    </div>
+                    <p class="text-gray-400 text-xs mt-1">Keyword: ${imp.keyword}</p>
+                </div>`;
+        });
+        
+        html += '</div></div>';
+        div.innerHTML = html;
+    }
+}
+
+function displayFileOps(operations) {
+    const div = document.getElementById('fileOperations');
+    if (operations.length === 0) {
+        div.innerHTML = `
+            <div class="bg-green-900/30 border border-green-500 p-4 rounded-lg">
+                <h4 class="text-green-400 font-bold">✓ No Suspicious File Operations</h4>
+            </div>`;
+    } else {
+        let html = `<div class="bg-yellow-900/30 border border-yellow-500 p-4 rounded-lg">
+            <h4 class="text-yellow-400 font-bold text-lg mb-3">⚠️ File Operations Detected (${operations.length})</h4>
+            <div class="space-y-1 mono text-sm bg-black/50 p-3 rounded">`;
+        
+        operations.forEach(op => {
+            html += `<div class="text-cyan-400">• ${op}</div>`;
+        });
+        
+        html += '</div></div>';
+        div.innerHTML = html;
+    }
+}
+
+function displayNetworkOps(operations) {
+    const div = document.getElementById('networkOperations');
+    if (operations.length === 0) {
+        div.innerHTML = `
+            <div class="bg-green-900/30 border border-green-500 p-4 rounded-lg">
+                <h4 class="text-green-400 font-bold">✓ No Network Operations Detected</h4>
+            </div>`;
+    } else {
+        let html = `<div class="bg-red-900/30 border border-red-500 p-4 rounded-lg">
+            <h4 class="text-red-400 font-bold text-lg mb-3">⚠️ Network Operations Detected (${operations.length})</h4>
+            <div class="space-y-1 mono text-sm bg-black/50 p-3 rounded">`;
+        
+        operations.forEach(op => {
+            html += `<div class="text-cyan-400">• ${op}</div>`;
+        });
+        
+        html += '</div></div>';
+        div.innerHTML = html;
+    }
+}
+</script>
+{% endblock %}

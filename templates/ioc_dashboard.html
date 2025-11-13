@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}IoC Dashboard - Keylogger Detection Platform{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="terminal p-6 rounded-lg">
+        <h2 class="text-3xl font-bold gradient-text mb-4">📊 Indicators of Compromise (IoC) Dashboard</h2>
+        <p class="text-gray-300">
+            Comprehensive overview of keylogger indicators of compromise, detection signatures, 
+            and recommended defensive measures.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="terminal p-4 rounded-lg text-center">
+            <div class="text-cyber-blue text-3xl mb-2">⌨️</div>
+            <div class="text-3xl font-bold text-cyber-blue">12</div>
+            <div class="text-sm text-gray-400 mt-1">Known Indicators</div>
+        </div>
+        
+        <div class="terminal p-4 rounded-lg text-center">
+            <div class="text-cyber-purple text-3xl mb-2">🔍</div>
+            <div class="text-3xl font-bold text-cyber-purple">8</div>
+            <div class="text-sm text-gray-400 mt-1">YARA Rules</div>
+        </div>
+        
+        <div class="terminal p-4 rounded-lg text-center">
+            <div class="text-cyber-green text-3xl mb-2">📜</div>
+            <div class="text-3xl font-bold text-cyber-green">3</div>
+            <div class="text-sm text-gray-400 mt-1">PowerShell Scripts</div>
+        </div>
+        
+        <div class="terminal p-4 rounded-lg text-center">
+            <div class="text-cyber-yellow text-3xl mb-2">🛡️</div>
+            <div class="text-3xl font-bold text-cyber-yellow">6</div>
+            <div class="text-sm text-gray-400 mt-1">Mitigations</div>
+        </div>
+    </div>
+
+    <div class="terminal p-6 rounded-lg">
+        <h3 class="text-2xl font-bold text-cyber-blue mb-4">Common Keylogger Indicators</h3>
+        
+        <div class="space-y-4">
+            <div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-blue/30">
+                <h4 class="text-cyber-blue font-bold mb-3">🔹 Suspicious Python Imports</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="bg-black/50 p-3 rounded">
+                        <code class="text-red-400 mono text-sm">pynput.keyboard</code>
+                        <p class="text-gray-400 text-xs mt-1">Keyboard event capturing</p>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded">
+                        <code class="text-red-400 mono text-sm">pyHook / pythoncom</code>
+                        <p class="text-gray-400 text-xs mt-1">Windows hook mechanisms</p>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded">
+                        <code class="text-yellow-400 mono text-sm">smtplib</code>
+                        <p class="text-gray-400 text-xs mt-1">Email data exfiltration</p>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded">
+                        <code class="text-yellow-400 mono text-sm">logging / getpass</code>
+                        <p class="text-gray-400 text-xs mt-1">Password and log capture</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-purple/30">
+                <h4 class="text-cyber-purple font-bold mb-3">🔹 File-Based Indicators</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-black/50 p-3 rounded mono text-sm">
+                        <div class="text-cyan-400 mb-1">keylog.txt</div>
+                        <div class="text-cyan-400 mb-1">*.log files</div>
+                        <div class="text-cyan-400">capture.dat</div>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded mono text-sm">
+                        <div class="text-cyan-400 mb-1">%TEMP%\logs\</div>
+                        <div class="text-cyan-400 mb-1">%APPDATA%\system\</div>
+                        <div class="text-cyan-400">Hidden folders</div>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded mono text-sm">
+                        <div class="text-yellow-400 mb-1">Encrypted logs</div>
+                        <div class="text-yellow-400 mb-1">Base64 encoded data</div>
+                        <div class="text-yellow-400">Hidden file attributes</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-green/30">
+                <h4 class="text-cyber-green font-bold mb-3">🔹 Persistence Mechanisms</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mono text-sm">
+                    <div class="bg-black/50 p-3 rounded">
+                        <div class="text-cyan-400 mb-2">Registry Run Keys</div>
+                        <code class="text-gray-400 text-xs">HKCU\Software\Microsoft\Windows\CurrentVersion\Run</code>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded">
+                        <div class="text-cyan-400 mb-2">Startup Folder</div>
+                        <code class="text-gray-400 text-xs">%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup</code>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded">
+                        <div class="text-cyan-400 mb-2">Scheduled Tasks</div>
+                        <code class="text-gray-400 text-xs">schtasks /create /tn "SystemUpdater"</code>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded">
+                        <div class="text-cyan-400 mb-2">Service Installation</div>
+                        <code class="text-gray-400 text-xs">sc create ServiceName binPath= "C:\path\to\malware.exe"</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-yellow/30">
+                <h4 class="text-cyber-yellow font-bold mb-3">🔹 Network Indicators</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="bg-black/50 p-3 rounded">
+                        <div class="text-cyan-400 mono text-sm mb-2">SMTP Connections</div>
+                        <ul class="text-gray-400 text-xs space-y-1">
+                            <li>• Port 587 (TLS)</li>
+                            <li>• Port 465 (SSL)</li>
+                            <li>• Port 25 (Unencrypted)</li>
+                        </ul>
+                    </div>
+                    <div class="bg-black/50 p-3 rounded">
+                        <div class="text-cyan-400 mono text-sm mb-2">HTTP POST Requests</div>
+                        <ul class="text-gray-400 text-xs space-y-1">
+                            <li>• Unusual outbound traffic</li>
+                            <li>• Base64 encoded payloads</li>
+                            <li>• Suspicious domains</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="terminal p-6 rounded-lg">
+        <h3 class="text-2xl font-bold text-cyber-red mb-4">Defensive Measures & Mitigations</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-blue/30">
+                <h4 class="text-cyber-blue font-bold mb-3">🛡️ Prevention Strategies</h4>
+                <ul class="space-y-2 text-gray-300 text-sm">
+                    <li class="flex items-start">
+                        <span class="text-green-400 mr-2">✓</span>
+                        <span>Keep antivirus and anti-malware software updated</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-400 mr-2">✓</span>
+                        <span>Use application whitelisting to control software execution</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-400 mr-2">✓</span>
+                        <span>Implement least privilege principle for user accounts</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-400 mr-2">✓</span>
+                        <span>Regular security awareness training for users</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-green-400 mr-2">✓</span>
+                        <span>Use virtual keyboards for sensitive password entry</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-cyber-dark/50 p-4 rounded-lg border border-cyber-green/30">
+                <h4 class="text-cyber-green font-bold mb-3">🔍 Detection Strategies</h4>
+                <ul class="space-y-2 text-gray-300 text-sm">
+                    <li class="flex items-start">
+                        <span class="text-cyan-400 mr-2">•</span>
+                        <span>Monitor for unusual process behaviors and resource usage</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-cyan-400 mr-2">•</span>
+                        <span>Scan startup locations and registry keys regularly</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-cyan-400 mr-2">•</span>
+                        <span>Analyze network traffic for suspicious outbound connections</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-cyan-400 mr-2">•</span>
+                        <span>Use YARA rules for proactive malware scanning</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="text-cyan-400 mr-2">•</span>
+                        <span>Implement file integrity monitoring for critical directories</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="terminal p-6 rounded-lg border-2 border-cyber-purple/50">
+        <h3 class="text-2xl font-bold text-cyber-purple mb-4">Sample File Hashes (Educational)</h3>
+        <p class="text-gray-400 text-sm mb-4">These hashes are from educational keylogger samples for detection rule development:</p>
+        
+        <div class="space-y-3 mono text-xs">
+            <div class="bg-black/50 p-3 rounded">
+                <div class="text-gray-400 mb-1">Sample 1: Basic Python Keylogger</div>
+                <div class="text-cyan-400">SHA-256: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2</div>
+                <div class="text-cyan-400 mt-1">MD5: 1234567890abcdef1234567890abcdef</div>
+            </div>
+            
+            <div class="bg-black/50 p-3 rounded">
+                <div class="text-gray-400 mb-1">Sample 2: Persistence Mechanism</div>
+                <div class="text-cyan-400">SHA-256: f2e1d0c9b8a7z6y5x4w3v2u1t0s9r8q7p6o5n4m3l2k1j0i9h8g7f6e5d4c3b2a1</div>
+                <div class="text-cyan-400 mt-1">MD5: fedcba0987654321fedcba0987654321</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

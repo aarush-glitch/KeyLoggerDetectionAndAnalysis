@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Code Viewer - Keylogger Detection Platform{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="terminal p-6 rounded-lg">
+        <h2 class="text-3xl font-bold gradient-text mb-4">📝 Educational Keylogger Code Viewer</h2>
+        <p class="text-gray-300">
+            View and analyze educational keylogger samples with syntax highlighting. 
+            <span class="text-cyber-yellow">⚠️ These are for educational purposes only - never execute this code!</span>
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button onclick="loadSample('keylogger')" class="terminal p-4 rounded-lg card-hover transition text-left">
+            <div class="text-cyber-blue text-2xl mb-2">⌨️</div>
+            <h3 class="text-lg font-bold text-cyber-blue">Basic Keylogger</h3>
+            <p class="text-sm text-gray-400 mt-2">Python keylogger using pynput</p>
+        </button>
+
+        <button onclick="loadSample('persistence')" class="terminal p-4 rounded-lg card-hover transition text-left">
+            <div class="text-cyber-purple text-2xl mb-2">🔄</div>
+            <h3 class="text-lg font-bold text-cyber-purple">Persistence Mechanism</h3>
+            <p class="text-sm text-gray-400 mt-2">Registry and startup persistence</p>
+        </button>
+
+        <button onclick="loadSample('custom')" class="terminal p-4 rounded-lg card-hover transition text-left">
+            <div class="text-cyber-green text-2xl mb-2">✏️</div>
+            <h3 class="text-lg font-bold text-cyber-green">Custom Code</h3>
+            <p class="text-sm text-gray-400 mt-2">Analyze your own code</p>
+        </button>
+    </div>
+
+    <div class="terminal p-6 rounded-lg">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-cyber-blue">Code Display</h3>
+            <button onclick="copyCode()" class="bg-cyber-blue/20 hover:bg-cyber-blue/30 text-cyber-blue px-4 py-2 rounded transition text-sm">
+                📋 Copy Code
+            </button>
+        </div>
+        
+        <div id="codeDisplay" class="bg-black p-4 rounded-lg overflow-x-auto min-h-[400px]">
+            <pre class="text-gray-400 mono text-sm">// Select a sample above or paste your own code...</pre>
+        </div>
+    </div>
+
+    <div class="terminal p-6 rounded-lg">
+        <h3 class="text-xl font-bold text-cyber-green mb-4">Key Indicators to Look For</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <h4 class="text-cyber-blue font-semibold mb-2 mono">Suspicious Imports:</h4>
+                <ul class="space-y-1 text-gray-300 text-sm mono">
+                    <li>• pynput.keyboard</li>
+                    <li>• logging / getpass</li>
+                    <li>• smtplib (email sending)</li>
+                    <li>• pyHook / pythoncom</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-cyber-purple font-semibold mb-2 mono">Suspicious Behaviors:</h4>
+                <ul class="space-y-1 text-gray-300 text-sm mono">
+                    <li>• File writing to .log/.txt files</li>
+                    <li>• Network communication (SMTP/HTTP)</li>
+                    <li>• Registry modifications</li>
+                    <li>• Startup folder manipulation</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="customCodeModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="terminal p-6 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-2xl font-bold text-cyber-blue">Paste Custom Code</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        <textarea id="customCodeInput" class="w-full h-64 bg-black text-gray-100 p-4 rounded-lg mono text-sm border border-cyber-blue/30 focus:border-cyber-blue focus:outline-none" placeholder="Paste Python code here..."></textarea>
+        <div class="mt-4 flex justify-end space-x-3">
+            <button onclick="closeModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded transition">Cancel</button>
+            <button onclick="loadCustomCode()" class="btn-primary text-white px-6 py-2 rounded transition">Load Code</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentCode = '';
+
+function loadSample(type) {
+    if (type === 'custom') {
+        document.getElementById('customCodeModal').classList.remove('hidden');
+        return;
+    }
+
+    fetch(`/api/get-sample-code/${type}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentCode = data.code;
+                document.getElementById('codeDisplay').innerHTML = data.highlighted;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function closeModal() {
+    document.getElementById('customCodeModal').classList.add('hidden');
+}
+
+function loadCustomCode() {
+    const code = document.getElementById('customCodeInput').value;
+    if (code.trim()) {
+        currentCode = code;
+        document.getElementById('codeDisplay').innerHTML = 
+            `<pre class="text-gray-100 mono text-sm">${escapeHtml(code)}</pre>`;
+        closeModal();
+    }
+}
+
+function copyCode() {
+    if (currentCode) {
+        navigator.clipboard.writeText(currentCode).then(() => {
+            alert('Code copied to clipboard!');
+        });
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}

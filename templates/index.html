@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Keylogger Detection Platform{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="text-center">
+        <h2 class="text-4xl font-bold gradient-text mb-4">Keylogger Creation and Detection</h2>
+        <p class="text-gray-300 text-lg max-w-3xl mx-auto">
+            An educational platform for understanding keylogger mechanics and implementing detection techniques
+            using YARA rules, static analysis, and PowerShell scripts.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+        <div class="terminal p-6 rounded-lg card-hover transition-all duration-300">
+            <div class="text-cyber-blue text-3xl mb-4">📝</div>
+            <h3 class="text-xl font-bold text-cyber-blue mb-3">Code Viewer</h3>
+            <p class="text-gray-300 mb-4">
+                Examine educational keylogger samples with syntax highlighting to understand their structure and behavior.
+            </p>
+            <a href="/code-viewer" class="inline-block bg-cyber-blue/20 hover:bg-cyber-blue/30 text-cyber-blue px-4 py-2 rounded transition">
+                View Samples →
+            </a>
+        </div>
+
+        <div class="terminal p-6 rounded-lg card-hover transition-all duration-300">
+            <div class="text-cyber-purple text-3xl mb-4">🔍</div>
+            <h3 class="text-xl font-bold text-cyber-purple mb-3">YARA Scanner</h3>
+            <p class="text-gray-300 mb-4">
+                Create and test YARA rules to detect malicious patterns and suspicious code signatures in files.
+            </p>
+            <a href="/yara-scanner" class="inline-block bg-cyber-purple/20 hover:bg-cyber-purple/30 text-cyber-purple px-4 py-2 rounded transition">
+                Scan Now →
+            </a>
+        </div>
+
+        <div class="terminal p-6 rounded-lg card-hover transition-all duration-300">
+            <div class="text-cyber-green text-3xl mb-4">⚙️</div>
+            <h3 class="text-xl font-bold text-cyber-green mb-3">Static Analysis</h3>
+            <p class="text-gray-300 mb-4">
+                Analyze Python code for suspicious imports, file operations, and network activities using pefile.
+            </p>
+            <a href="/static-analysis" class="inline-block bg-cyber-green/20 hover:bg-cyber-green/30 text-cyber-green px-4 py-2 rounded transition">
+                Analyze Code →
+            </a>
+        </div>
+
+        <div class="terminal p-6 rounded-lg card-hover transition-all duration-300">
+            <div class="text-cyber-yellow text-3xl mb-4">💻</div>
+            <h3 class="text-xl font-bold text-cyber-yellow mb-3">PowerShell Generator</h3>
+            <p class="text-gray-300 mb-4">
+                Generate PowerShell scripts for detecting persistence mechanisms and monitoring suspicious processes.
+            </p>
+            <a href="/powershell-generator" class="inline-block bg-cyber-yellow/20 hover:bg-cyber-yellow/30 text-cyber-yellow px-4 py-2 rounded transition">
+                Generate Scripts →
+            </a>
+        </div>
+
+        <div class="terminal p-6 rounded-lg card-hover transition-all duration-300">
+            <div class="text-cyber-red text-3xl mb-4">📊</div>
+            <h3 class="text-xl font-bold text-cyber-red mb-3">IoC Dashboard</h3>
+            <p class="text-gray-300 mb-4">
+                View Indicators of Compromise including file hashes, suspicious imports, and detection results.
+            </p>
+            <a href="/ioc-dashboard" class="inline-block bg-cyber-red/20 hover:bg-cyber-red/30 text-cyber-red px-4 py-2 rounded transition">
+                View Dashboard →
+            </a>
+        </div>
+
+        <div class="terminal p-6 rounded-lg card-hover transition-all duration-300">
+            <div class="text-cyan-400 text-3xl mb-4">📚</div>
+            <h3 class="text-xl font-bold text-cyan-400 mb-3">Documentation</h3>
+            <p class="text-gray-300 mb-4">
+                Access comprehensive documentation on detection techniques and defensive measures.
+            </p>
+            <a href="#documentation" class="inline-block bg-cyan-400/20 hover:bg-cyan-400/30 text-cyan-400 px-4 py-2 rounded transition">
+                Read Docs →
+            </a>
+        </div>
+    </div>
+
+    <div class="terminal p-8 rounded-lg mt-12">
+        <h3 class="text-2xl font-bold text-cyber-blue mb-6">Project Objectives</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="text-lg font-semibold text-cyber-green mb-3">🎯 Analysis Goals</h4>
+                <ul class="space-y-2 text-gray-300 mono text-sm">
+                    <li>• Examine Python-based keylogger structure</li>
+                    <li>• Identify data flow and capture mechanisms</li>
+                    <li>• Document indicators of compromise (IoCs)</li>
+                    <li>• Analyze storage and exfiltration logic</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-lg font-semibold text-cyber-purple mb-3">🛠️ Detection Tools</h4>
+                <ul class="space-y-2 text-gray-300 mono text-sm">
+                    <li>• YARA for pattern-based scanning</li>
+                    <li>• Python with pefile for import inspection</li>
+                    <li>• PowerShell for persistence detection</li>
+                    <li>• Static analysis without code execution</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="terminal p-8 rounded-lg mt-8 border-2 border-cyber-yellow/50">
+        <div class="flex items-start space-x-4">
+            <div class="text-cyber-yellow text-3xl">⚠️</div>
+            <div>
+                <h4 class="text-xl font-bold text-cyber-yellow mb-2">Ethical Guidelines</h4>
+                <p class="text-gray-300 mb-3">
+                    This platform is designed exclusively for educational and defensive security research purposes.
+                </p>
+                <ul class="space-y-1 text-gray-300 text-sm mono">
+                    <li>✓ All analysis performed in isolated environment</li>
+                    <li>✓ Static-only analysis - no code execution</li>
+                    <li>✓ No real user data captured or transmitted</li>
+                    <li>✓ Compliance with responsible disclosure policies</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
