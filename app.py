@@ -2,6 +2,7 @@ import os
 import hashlib
 import yara
 import pefile
+import tempfile
 from flask import Flask, render_template, request, jsonify
 from pygments import highlight
 from pygments.lexers import PythonLexer, PowerShellLexer
@@ -26,13 +27,13 @@ def yara_scanner():
 def static_analysis():
     return render_template('static_analysis.html')
 
-@app.route('/powershell-generator')
-def powershell_generator():
-    return render_template('powershell_generator.html')
+# @app.route('/powershell-generator')
+# def powershell_generator():
+#     return render_template('powershell_generator.html')
 
-@app.route('/ioc-dashboard')
-def ioc_dashboard():
-    return render_template('ioc_dashboard.html')
+# @app.route('/ioc-dashboard')
+# def ioc_dashboard():
+#     return render_template('ioc_dashboard.html')
 
 @app.route('/api/scan-with-yara', methods=['POST'])
 def scan_with_yara():
@@ -40,20 +41,48 @@ def scan_with_yara():
         data = request.get_json()
         code_content = data.get('code', '')
         yara_rule = data.get('rule', '')
-        
-        with open('/tmp/temp_rule.yar', 'w') as f:
-            f.write(yara_rule)
-        
-        rules = yara.compile('/tmp/temp_rule.yar')
-        
-        matches = rules.match(data=code_content.encode())
+        # Write the YARA rule to a temporary file in a cross-platform way
+        temp_path = None
+        try:
+            with tempfile.NamedTemporaryFile('w', delete=False, suffix='.yar') as f:
+                temp_path = f.name
+                f.write(yara_rule)
+
+            rules = yara.compile(temp_path)
+            matches = rules.match(data=code_content.encode())
+        finally:
+            if temp_path:
+                try:
+                    os.remove(temp_path)
+                except Exception:
+                    pass
         
         results = []
         for match in matches:
+            # match.strings may be tuples or yara.StringMatch objects depending on yara-python version
+            strings_list = []
+            for s in getattr(match, 'strings', []) or []:
+                try:
+                    # tuple-like (offset, id, data)
+                    id_part = s[1]
+                    data_part = s[2]
+                except Exception:
+                    # object-like: try common attributes
+                    id_part = getattr(s, 'identifier', None) or getattr(s, 'id', None)
+                    data_part = getattr(s, 'data', None) or getattr(s, 'value', None)
+
+                if isinstance(data_part, bytes):
+                    try:
+                        data_part = data_part.decode()
+                    except Exception:
+                        data_part = str(data_part)
+
+                strings_list.append((id_part, data_part))
+
             result = {
-                'rule': match.rule,
-                'tags': match.tags,
-                'strings': [(s[1], s[2].decode() if isinstance(s[2], bytes) else s[2]) for s in match.strings]
+                'rule': getattr(match, 'rule', None),
+                'tags': getattr(match, 'tags', []),
+                'strings': strings_list
             }
             results.append(result)
         
